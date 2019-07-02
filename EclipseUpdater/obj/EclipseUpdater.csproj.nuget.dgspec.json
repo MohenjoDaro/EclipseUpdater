@@ -1,0 +1,89 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Stephen\\source\\repos\\EclipseUpdater\\EclipseUpdater\\EclipseUpdater.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Stephen\\source\\repos\\EclipseUpdater\\EclipseUpdater\\EclipseUpdater.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Stephen\\source\\repos\\EclipseUpdater\\EclipseUpdater\\EclipseUpdater.csproj",
+        "projectName": "EclipseUpdater",
+        "projectPath": "C:\\Users\\Stephen\\source\\repos\\EclipseUpdater\\EclipseUpdater\\EclipseUpdater.csproj",
+        "packagesPath": "C:\\Users\\Stephen\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Stephen\\source\\repos\\EclipseUpdater\\EclipseUpdater\\obj\\",
+        "projectStyle": "PackageReference",
+        "crossTargeting": true,
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\Stephen\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net461",
+          "netcoreapp2.1"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp2.1": {
+            "projectReferences": {}
+          },
+          "net461": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp2.1": {
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[0.8.0, )"
+            },
+            "Avalonia.Desktop": {
+              "target": "Package",
+              "version": "[0.8.0, )"
+            },
+            "Microsoft.NETCore.App": {
+              "target": "Package",
+              "version": "[2.1.0, )",
+              "autoReferenced": true
+            }
+          },
+          "imports": [
+            "net461"
+          ],
+          "assetTargetFallback": true,
+          "warn": true
+        },
+        "net461": {
+          "dependencies": {
+            "Avalonia": {
+              "target": "Package",
+              "version": "[0.8.0, )"
+            },
+            "Avalonia.Desktop": {
+              "target": "Package",
+              "version": "[0.8.0, )"
+            }
+          }
+        }
+      },
+      "runtimes": {
+        "win7-x86": {
+          "#import": []
+        }
+      }
+    }
+  }
+}
