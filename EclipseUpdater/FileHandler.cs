@@ -38,6 +38,19 @@ namespace EclipseUpdater
             }
         }
 
+        public static bool RenameDirectory(string pathTarget, string nameDirectory)
+        {
+            try
+            {
+                Directory.Move(pathTarget, Path.Combine(Directory.GetParent(pathTarget).FullName, nameDirectory));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static bool DestroyDirectory(string pathTarget)
         {
             try
@@ -69,6 +82,19 @@ namespace EclipseUpdater
             try
             {
                 File.Move(pathTarget, pathDestination);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool RenameFile(string pathTarget, string nameFile)
+        {
+            try
+            {
+                File.Move(pathTarget, Path.Combine(Path.GetDirectoryName(pathTarget), nameFile));
                 return true;
             }
             catch
