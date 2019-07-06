@@ -64,7 +64,7 @@ namespace EclipseUpdater
 
             string pathCurrent = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             // Rename the updates if it needs updates
-            if (idProject == 0)
+            if (idProject == 0) // This will be the updater's ID
             {
                 // Get the list of directory names from the temp download directory
                 foreach (string currDirectory in Directory.EnumerateDirectories(pathTemp))
