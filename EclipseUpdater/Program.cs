@@ -1,7 +1,13 @@
 ﻿using System;
+<<<<<<< HEAD
 using System.IO;
+=======
+using System.Linq;
+using System.Threading.Tasks;
+>>>>>>> 2854ebca71e3e09ff2d43f87bb775da914379156
 using Avalonia;
 using Avalonia.Logging.Serilog;
+using EclipseUpdater.Api;
 
 namespace EclipseUpdater
 {
@@ -22,6 +28,7 @@ namespace EclipseUpdater
         // container, etc.
         private static void AppMain(Application app, string[] args)
         {
+<<<<<<< HEAD
             // Delete any files marked for deletion before starting the app
             DirectoryHandler.DestroyMarkedForDeletion(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
 
@@ -84,6 +91,22 @@ namespace EclipseUpdater
             DirectoryHandler.MoveDirectory(pathTemp, pathCurrent, true);
             // Delete temp download directory
             DirectoryHandler.DestroyDirectory(pathTemp);
+=======
+            //Task.Run(TestReleases);
+            app.Run(new MainWindow());
+        }
+
+        private static async Task TestReleases() {
+            var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
+
+            var releases = await releasesClient.GetReleasesAsync(new Guid("0836bbd7-d9b4-466a-a566-7670bd568e3b"), 0, 1);
+
+            if (releases.Items.Count > 0) {
+                var latestRelease = releases.Items[0];
+
+                var downloadUrl = latestRelease.GetDownloadUrl();
+            }
+>>>>>>> 2854ebca71e3e09ff2d43f87bb775da914379156
         }
     }
 }
