@@ -1,10 +1,7 @@
 ﻿using System;
-<<<<<<< HEAD
 using System.IO;
-=======
 using System.Linq;
 using System.Threading.Tasks;
->>>>>>> 2854ebca71e3e09ff2d43f87bb775da914379156
 using Avalonia;
 using Avalonia.Logging.Serilog;
 using EclipseUpdater.Api;
@@ -28,7 +25,6 @@ namespace EclipseUpdater
         // container, etc.
         private static void AppMain(Application app, string[] args)
         {
-<<<<<<< HEAD
             // Delete any files marked for deletion before starting the app
             DirectoryHandler.DestroyMarkedForDeletion(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
 
@@ -39,7 +35,7 @@ namespace EclipseUpdater
 
         private static void UpdateTarget()
         {
-            int idProject = 0;
+            int idProject = 0; // The ID for the program being updated
 
             // Check for updates
             string[] urlDownloads = UpdateHandler.CheckForUpdate(idProject);
@@ -91,9 +87,7 @@ namespace EclipseUpdater
             DirectoryHandler.MoveDirectory(pathTemp, pathCurrent, true);
             // Delete temp download directory
             DirectoryHandler.DestroyDirectory(pathTemp);
-=======
-            //Task.Run(TestReleases);
-            app.Run(new MainWindow());
+
         }
 
         private static async Task TestReleases() {
@@ -106,7 +100,6 @@ namespace EclipseUpdater
 
                 var downloadUrl = latestRelease.GetDownloadUrl();
             }
->>>>>>> 2854ebca71e3e09ff2d43f87bb775da914379156
         }
     }
 }
