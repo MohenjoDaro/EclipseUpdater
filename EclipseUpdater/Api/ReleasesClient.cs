@@ -15,14 +15,15 @@ namespace EclipseUpdater.Api
             this.baseUri = baseUri;
         }
 
-        public Task<ReleaseList> GetReleasesAsync(Guid projectId, int offset, int count, int channelId = 0, bool includePrerelease = true) {
+        public Task<ReleaseList> GetReleasesAsync(Guid projectId, int offset, int count, int channelId = 0, bool includePrerelease = true, DateTime? minimumDate = null) {
             return baseUri.AppendPathSegments("api", "v1", "releases", projectId)
                           .SetQueryParams(new
                           {
                               Offset = offset,
                               Count = count,
                               ChannelId = channelId,
-                              IncludePrerelease = includePrerelease
+                              IncludePrerelease = includePrerelease,
+                              MinimumDate = minimumDate
                           })
                           .GetJsonAsync<ReleaseList>();
         }
