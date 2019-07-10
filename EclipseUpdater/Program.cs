@@ -10,8 +10,7 @@ namespace EclipseUpdater
 {
     class Program
     {
-        private const string idProject = "0836bbd7-d9b4-466a-a566-7670bd568e3b"; // Change this to your project ID
-
+        private static string idProject;
         private const string idUpdater = ""; // This is the project ID for the updater, do NOT change this 
 
         // Initialization code. Don't use any Avalonia, third-party APIs or any
@@ -33,9 +32,11 @@ namespace EclipseUpdater
             DirectoryHandler.DestroyMarkedForDeletion(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
 
             ConfigHandler.LoadConfig();
+            // Load the project ID
+            // Remove the set value and use the config value when it's setup
+            idProject = "0836bbd7-d9b4-466a-a566-7670bd568e3b"; // ConfigHandler.GetConfigSetting("id");
 
-            Task.Run(() => UpdateTarget(idProject));
-            //Task.Run(TestReleases);
+            //Task.Run(() => UpdateTarget(idProject));
 
             app.Run(new MainWindow());
         }
