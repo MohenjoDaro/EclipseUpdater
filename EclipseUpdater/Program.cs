@@ -10,6 +10,10 @@ namespace EclipseUpdater
 {
     class Program
     {
+        private const string idProject = "0836bbd7-d9b4-466a-a566-7670bd568e3b"; // Change this to your project ID
+
+        private const string idUpdater = ""; // This is the project ID for the updater, do NOT change this 
+
         // Initialization code. Don't use any Avalonia, third-party APIs or any
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
@@ -28,66 +32,87 @@ namespace EclipseUpdater
             // Delete any files marked for deletion before starting the app
             DirectoryHandler.DestroyMarkedForDeletion(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
 
+            ConfigHandler.LoadConfig();
+
+            Task.Run(() => UpdateTarget(idProject));
+            //Task.Run(TestReleases);
+
             app.Run(new MainWindow());
         }
 
 
 
-        private static void UpdateTarget()
+        private static async Task UpdateTarget(string id)
         {
-            int idProject = 0; // The ID for the program being updated
-
-            // Check for updates
-            string[] urlDownloads = UpdateHandler.CheckForUpdate(idProject);
-            string pathTemp = Path.Combine(Path.GetTempPath(), "updater_temp");
-            if (urlDownloads.Length != 0)
+            try
             {
-                // Create temp directory for download
-                if (Directory.Exists(pathTemp))
+                // Check for updates
+                string[] urlDownloads = await UpdateHandler.GetUpdateUrls(idProject);
+                string pathTemp = Path.Combine(Path.GetTempPath(), "updater_temp");
+                string pathTempDownload = Path.Combine(pathTemp, "download");
+                string pathTempExtract = Path.Combine(pathTemp, "extract");
+                if (urlDownloads.Length != 0)
                 {
+                    // Delete temp update directory incase one is still hanging around
+                    DirectoryHandler.DestroyDirectory(pathTemp);
+
+                    // Create temp directories for updating
                     DirectoryHandler.CreateDirectory(pathTemp);
-                }
+                    DirectoryHandler.CreateDirectory(pathTempDownload);
+                    DirectoryHandler.CreateDirectory(pathTempExtract);
 
-                // Download each update
-                for (int i = 0; i < urlDownloads.Length; i++)
-                {
-                    UpdateHandler.DownloadUpdate(pathTemp, idProject, urlDownloads[i]);
+
+                    // Download each update
+                    for (int i = 0; i < urlDownloads.Length; i++)
+                    {
+                        await UpdateHandler.DownloadUpdate(pathTempDownload, urlDownloads[i]);
+                    }
+
+
+                    // Check for extraction
+                    foreach (string file in Directory.EnumerateFiles(pathTempDownload))
+                    {
+                        ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract);
+                    }
+
+
+                    string pathCurrent = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+                    // Rename the updates if it needs updates
+                    if (id == idUpdater) // This will be the UPDATERS's ID
+                    {
+                        // Get the list of directory names from the temp download directory
+                        foreach (string dir in Directory.EnumerateDirectories(pathTempExtract))
+                        {
+                            string pathCurrentDirectory = Path.Combine(pathCurrent, dir);
+                            if (File.Exists(pathCurrentDirectory))
+                            {
+                                FileHandler.MarkForDeletionFile(pathCurrentDirectory);
+                            }
+                        }
+
+                        // Get the list of file names from the temp download directory
+                        foreach (string file in Directory.EnumerateFiles(pathTempExtract))
+                        {
+                            string pathCurrentFile = Path.Combine(pathCurrent, file);
+                            if (File.Exists(pathCurrentFile))
+                            {
+                                FileHandler.MarkForDeletionFile(pathCurrentFile);
+                            }
+                        }
+                    }
+
+
+                    // Move the updated files from the temp to exe directory
+                    string nameProject = ConfigHandler.GetConfigSetting("name")?.ToString() ?? "";
+                    DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true);
+                    // Delete temp update directory
+                    DirectoryHandler.DestroyDirectory(pathTemp);
                 }
             }
-
-            // Check for extraction
-            // extraction call goes here
-
-            string pathCurrent = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            // Rename the updates if it needs updates
-            if (idProject == 0) // This will be the updater's ID
+            catch
             {
-                // Get the list of directory names from the temp download directory
-                foreach (string currDirectory in Directory.EnumerateDirectories(pathTemp))
-                {
-                    string pathCurrentDirectory = Path.Combine(pathCurrent, currDirectory);
-                    if (File.Exists(pathCurrentDirectory))
-                    {
-                        FileHandler.MarkForDeletionFile(pathCurrentDirectory);
-                    }
-                }
 
-                // Get the list of file names from the temp download directory
-                foreach (string currFile in Directory.EnumerateFiles(pathTemp))
-                {
-                    string pathCurrentFile = Path.Combine(pathCurrent, currFile);
-                    if (File.Exists(pathCurrentFile))
-                    {
-                        FileHandler.MarkForDeletionFile(pathCurrentFile);
-                    }
-                }
             }
-
-            // Move the updated files from the temp to exe directory
-            DirectoryHandler.MoveDirectory(pathTemp, pathCurrent, true);
-            // Delete temp download directory
-            DirectoryHandler.DestroyDirectory(pathTemp);
-
         }
 
         private static async Task TestReleases() {
