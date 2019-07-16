@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using EclipseUpdater.Api;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Flurl.Http;
 using ICSharpCode.SharpZipLib.Core;
@@ -170,42 +171,82 @@ namespace EclipseUpdater
         }
     }
 
+
+
+    public class Config
+    {
+        public class ProjectData
+        {
+            public string ID { get; set; }
+            public string Name { get; set; }
+            public string Description { get; set; }
+        }
+
+        public class VersionData
+        {
+            public int ID { get; set; }
+            public DateTime UpdateDate { get; set; }
+        }
+
+        public ProjectData Project = new ProjectData(); // { get; set; }
+        public VersionData Version = new VersionData(); // { get; set; }
+    }
+
     class ConfigHandler
     {
-        private static string cfgPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.json");
-        private static JObject cfgFile;
+        private static readonly string cfgPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.json");
+        public static Config ConfigFile { get; set; }
 
         public static void LoadConfig()
         {
             try {
-                cfgFile = JObject.Parse(File.ReadAllText(cfgPath + ".json"));
+                if (File.Exists(cfgPath))
+                {
+                    ConfigFile = JsonConvert.DeserializeObject<Config>(File.ReadAllText(cfgPath));
+                }
+                else
+                {
+                    ConfigFile = new Config
+                    {
+                        Project = new Config.ProjectData
+                        {
+                            ID = "",
+                            Name = "",
+                            Description = ""
+                        },
+                        Version = new Config.VersionData
+                        {
+                            ID = -1,
+                            UpdateDate = new DateTime()
+                        }
+                    };
+
+                    SaveConfig();
+                }
             } catch {
-                
+
             }
         }
-
+        
         public static void SaveConfig()
         {
-            try {
-                File.WriteAllText(cfgPath, cfgFile.ToString());
-            } catch {
-                
+            try
+            {
+                string json = JsonConvert.SerializeObject(ConfigFile, Formatting.Indented);
+                File.WriteAllText(cfgPath, json);
             }
-        }
-
-        public static string GetConfigSetting(string setting)
-        {
-            try {
-                return (string)cfgFile[setting];
-            } catch {
-                return null;
+            catch
+            {
+                
             }
         }
     }
 
+
+
     class UpdateHandler
     {
-        private static int countPage = 25;
+        private const int countPage = 25;
 
         // Returns a string array of urls to download files
         public static async Task<string[]> GetUpdateUrls(string idProject)
@@ -215,7 +256,7 @@ namespace EclipseUpdater
 
                 var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
 
-                DateTime dateUpdate = Convert.ToDateTime(ConfigHandler.GetConfigSetting("updateDate"));
+                DateTime dateUpdate = ConfigHandler.ConfigFile.Version.UpdateDate;
 
                 var releaseNewest = await releasesClient.GetReleasesAsync(new Guid(idProject), 0, 1, minimumDate: dateUpdate);
                 int cntReleases = releaseNewest.TotalCount;
@@ -223,7 +264,7 @@ namespace EclipseUpdater
                 string[] urlReleases = new string[cntReleases];
 
                 // Check if the versions match
-                if (releaseNewest.Items[0].Id == Convert.ToInt32(ConfigHandler.GetConfigSetting("versionId"))) { return null; }
+                if (releaseNewest.Items[0].Id == ConfigHandler.ConfigFile.Version.ID) { return null; }
 
                 // Get each page of updates
                 int i = 0;
@@ -262,6 +303,8 @@ namespace EclipseUpdater
             }
         }
     }
+
+
 
     class ExtractionHandler
     {

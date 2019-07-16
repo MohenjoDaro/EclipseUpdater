@@ -32,9 +32,9 @@ namespace EclipseUpdater
             DirectoryHandler.DestroyMarkedForDeletion(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
 
             ConfigHandler.LoadConfig();
+
             // Load the project ID
-            // Remove the set value and use the config value when it's setup
-            idProject = "0836bbd7-d9b4-466a-a566-7670bd568e3b"; // ConfigHandler.GetConfigSetting("id");
+            idProject = ConfigHandler.ConfigFile.Project.ID; // "0836bbd7-d9b4-466a-a566-7670bd568e3b"
 
             //Task.Run(() => UpdateTarget(idProject));
 
@@ -104,7 +104,7 @@ namespace EclipseUpdater
 
 
                     // Move the updated files from the temp to exe directory
-                    string nameProject = ConfigHandler.GetConfigSetting("name")?.ToString() ?? "";
+                    string nameProject = ConfigHandler.ConfigFile.Project.Name;
                     DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true);
                     // Delete temp update directory
                     DirectoryHandler.DestroyDirectory(pathTemp);
