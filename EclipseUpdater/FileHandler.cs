@@ -177,7 +177,7 @@ namespace EclipseUpdater
     {
         public class ProjectData
         {
-            public string ID { get; set; }
+            public Guid ID { get; set; }
             public string Name { get; set; }
             public string Description { get; set; }
         }
@@ -210,7 +210,7 @@ namespace EclipseUpdater
                     {
                         Project = new Config.ProjectData
                         {
-                            ID = "",
+                            ID = Guid.Empty,
                             Name = "",
                             Description = ""
                         },
@@ -249,7 +249,7 @@ namespace EclipseUpdater
         private const int countPage = 25;
 
         // Returns a string array of urls to download files
-        public static async Task<string[]> GetUpdateUrls(string idProject)
+        public static async Task<string[]> GetUpdateUrls(Guid projectId)
         {
             try
             {
@@ -258,7 +258,7 @@ namespace EclipseUpdater
 
                 DateTime dateUpdate = ConfigHandler.ConfigFile.Version.UpdateDate;
 
-                var releaseNewest = await releasesClient.GetReleasesAsync(new Guid(idProject), 0, 1, minimumDate: dateUpdate);
+                var releaseNewest = await releasesClient.GetReleasesAsync(projectId, 0, 1, minimumDate: dateUpdate);
                 int cntReleases = releaseNewest.TotalCount;
 
                 string[] urlReleases = new string[cntReleases];
@@ -270,7 +270,7 @@ namespace EclipseUpdater
                 int i = 0;
                 while (i < cntReleases)
                 {
-                    var releases = await releasesClient.GetReleasesAsync(new Guid(idProject), 0, 1);
+                    var releases = await releasesClient.GetReleasesAsync(projectId, 0, 1);
 
                     for (int r = 0; r < releases.Items.Count; ++r)
                     {

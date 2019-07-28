@@ -1,25 +1,31 @@
 ﻿<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" d:DesignWidth="600"
-    d:DesignHeight="450" x:Class="EclipseUpdater.MainWindow" Title="EclipseUpdater">
-
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+    d:DesignWidth="600"
+    d:DesignHeight="215"
+    Width="600"
+    Height="215"
+    MinWidth="300"
+    MinHeight="215"
+    x:Class="EclipseUpdater.MainWindow" Title="Eclipse Updater">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="10">Game Name!</TextBlock>
-        <ProgressBar Grid.Row="3" Grid.Column="1" Margin="10"></ProgressBar>
-        <Button Grid.Row="3" Grid.Column="3" Margin="10">Update!</Button>
+        <TextBlock Grid.Row="0" Margin="10" TextAlignment="Center" Text="{Binding GameName}" FontSize="16" />
+        <TextBlock Grid.Row="1" Margin="10" TextAlignment="Left" Text="{Binding Description}" Height="100" />
 
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" Margin="10" Minimum="0" Maximum="100" Value="{Binding Progress}" />
+            <Button Grid.Column="1" Margin="10" Padding="5" Content="Update!" Command="{Binding UpdateCommand}" />
+        </Grid>
     </Grid>
 </Window>
