@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows.Input;
+using System.Threading.Tasks;
 
 namespace EclipseUpdater
 {
@@ -25,19 +26,41 @@ namespace EclipseUpdater
             set => this.RaiseAndSetIfChanged(ref description, value);
         }
 
-        int progress;
+        string versionLocal;
+        public string LocalVersion
+        {
+            get => versionLocal;
+            set => this.RaiseAndSetIfChanged(ref versionLocal, value);
+        }
 
+        string versionLatest;
+        public string LatestVersion
+        {
+            get => versionLatest;
+            set => this.RaiseAndSetIfChanged(ref versionLatest, value);
+        }
+
+        int progress;
         public int Progress {
             get => progress;
             set => this.RaiseAndSetIfChanged(ref progress, value);
         }
 
-        public MainWindowViewModel(Guid projectId) {
+        public MainWindowViewModel(Guid projectId)
+        {
             this.projectId = projectId; // new Guid("0836bbd7-d9b4-466a-a566-7670bd568e3b");
             this.GameName = ConfigHandler.ConfigFile.Project.Name;
             this.Description = ConfigHandler.ConfigFile.Project.Description;
 
             this.UpdateCommand = ReactiveCommand.Create(UpdateCommandCallback);
+
+            GuiUpdateVersion(projectId);
+        }
+
+        private void GuiUpdateVersion(Guid projectId)
+        {
+            this.LocalVersion = "Local Version: " + ConfigHandler.ConfigFile.Version.LocalVersion;
+            this.LatestVersion = "Latest Version: " + Task.Run(async () => await UpdateHandler.GetLatestVersion(projectId)).Result;
         }
 
         private async void UpdateCommandCallback() {
@@ -47,6 +70,7 @@ namespace EclipseUpdater
                 string pathTemp = Path.Combine(Path.GetTempPath(), "updater_temp");
                 string pathTempDownload = Path.Combine(pathTemp, "download");
                 string pathTempExtract = Path.Combine(pathTemp, "extract");
+
                 if (urlDownloads.Length != 0) {
                     // Delete temp update directory incase one is still hanging around
                     DirectoryHandler.DestroyDirectory(pathTemp);
@@ -59,7 +83,7 @@ namespace EclipseUpdater
 
                     // Download each update
                     for (int i = 0; i < urlDownloads.Length; i++) {
-                        await UpdateHandler.DownloadUpdate(pathTempDownload, urlDownloads[i]);
+                        await Download.DownloadUpdate(pathTempDownload, urlDownloads[i]);
                     }
 
 
@@ -96,6 +120,13 @@ namespace EclipseUpdater
                     DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true);
                     // Delete temp update directory
                     DirectoryHandler.DestroyDirectory(pathTemp);
+
+
+                    // Update the version to the latest
+                    ConfigHandler.ConfigFile.Version.LocalVersion = await UpdateHandler.GetLatestVersion(projectId);
+                    ConfigHandler.ConfigFile.Version.UpdateDate = DateTime.UtcNow;
+                    ConfigHandler.SaveConfig();
+                    GuiUpdateVersion(projectId);
                 }
             } catch {
 

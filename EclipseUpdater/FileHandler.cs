@@ -184,6 +184,7 @@ namespace EclipseUpdater
 
         public class VersionData
         {
+            public string LocalVersion { get; set; }
             public int ID { get; set; }
             public DateTime UpdateDate { get; set; }
         }
@@ -216,6 +217,7 @@ namespace EclipseUpdater
                         },
                         Version = new Config.VersionData
                         {
+                            LocalVersion = "",
                             ID = -1,
                             UpdateDate = new DateTime()
                         }
@@ -248,12 +250,24 @@ namespace EclipseUpdater
     {
         private const int countPage = 25;
 
+        public static async Task<string> GetLatestVersion(Guid projectId)
+        {
+            try
+            {
+                var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
+
+                var releaseLocal = await releasesClient.GetReleasesAsync(projectId, 0, 1);
+                return releaseLocal.Items[0].Version;
+            } catch {
+                return "";
+            }
+        }
+
         // Returns a string array of urls to download files
         public static async Task<string[]> GetUpdateUrls(Guid projectId)
         {
             try
             {
-
                 var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
 
                 DateTime dateUpdate = ConfigHandler.ConfigFile.Version.UpdateDate;

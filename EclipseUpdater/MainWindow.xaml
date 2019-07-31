@@ -1,12 +1,12 @@
 ﻿<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-    d:DesignWidth="600"
-    d:DesignHeight="215"
-    Width="600"
-    Height="215"
+    d:DesignWidth="450"
+    d:DesignHeight="245"
+    Width="450"
+    Height="245"
     MinWidth="300"
-    MinHeight="215"
+    MinHeight="245"
     x:Class="EclipseUpdater.MainWindow" Title="Eclipse Updater">
 
     <Grid>
@@ -15,11 +15,20 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Margin="10" TextAlignment="Center" Text="{Binding GameName}" FontSize="16" />
-        <TextBlock Grid.Row="1" Margin="10" TextAlignment="Left" Text="{Binding Description}" Height="100" />
-
+        <TextBlock Grid.Row="0" Margin="10" TextAlignment="Center" Text="{Binding GameName}" TextWrapping="Wrap" FontSize="16" />
+        <TextBlock Grid.Row="1" Margin="10" TextAlignment="Center" Text="{Binding Description}" TextWrapping="Wrap" Height="100" />
+        
         <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Margin="0,0,10,0" TextAlignment="Right" Text="{Binding LocalVersion}" />
+            <TextBlock Grid.Row="1" Margin="0,0,10,0" TextAlignment="Right" Text="{Binding LatestVersion}" />
+        </Grid>
+        <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
