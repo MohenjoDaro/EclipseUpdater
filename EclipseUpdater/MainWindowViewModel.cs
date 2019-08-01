@@ -57,10 +57,12 @@ namespace EclipseUpdater
             GuiUpdateVersion(projectId);
         }
 
-        private void GuiUpdateVersion(Guid projectId)
+        private async void GuiUpdateVersion(Guid projectId)
         {
-            this.LocalVersion = "Local Version: " + ConfigHandler.ConfigFile.Version.LocalVersion;
-            this.LatestVersion = "Latest Version: " + Task.Run(async () => await UpdateHandler.GetLatestVersion(projectId)).Result;
+            this.LocalVersion = "Local: " + ConfigHandler.ConfigFile.Version.LocalVersion;
+
+            string versionCurrent = await UpdateHandler.GetLatestVersion(projectId);
+            this.LatestVersion = "Latest: " + versionCurrent;
         }
 
         private async void UpdateCommandCallback() {
@@ -83,7 +85,7 @@ namespace EclipseUpdater
 
                     // Download each update
                     for (int i = 0; i < urlDownloads.Length; i++) {
-                        await Download.DownloadUpdate(pathTempDownload, urlDownloads[i]);
+                        await Download.DownloadUpdate(pathTempDownload, urlDownloads[i], this);
                     }
 
 

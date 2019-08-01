@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using EclipseUpdater.Api;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Flurl.Http;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.GZip;
@@ -299,21 +298,6 @@ namespace EclipseUpdater
             catch
             {
                 return null;
-            }
-        }
-
-        // Downloads a file from a given link
-        public async static Task<bool> DownloadUpdate(string pathTarget, string url)
-        {
-            try
-            {
-                var path = await url.DownloadFileAsync(pathTarget);
-                return true;
-            }
-            catch (InvalidCastException e)
-            {
-                Console.WriteLine("Error: " + e);
-                return false;
             }
         }
     }
