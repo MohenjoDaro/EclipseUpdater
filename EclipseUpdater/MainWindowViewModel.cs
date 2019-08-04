@@ -113,8 +113,10 @@ namespace EclipseUpdater
                     }
 
 
+                    // Check if we're updating the Updater itself
+                    // Rename any new files so they can be updated if we are
+                    // These files will be deleted after the updater is restarted
                     string pathCurrent = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-                    // Rename the updates if it needs updates
                     if (projectId == Constants.UpdaterId) // This will be the UPDATERS's ID
                     {
                         // Get the list of directory names from the temp download directory
@@ -132,21 +134,33 @@ namespace EclipseUpdater
                                 FileHandler.MarkForDeletionFile(pathCurrentFile);
                             }
                         }
+
+                        // Move the updated files from the temp to exe directory
+                        string nameProject = ConfigHandler.ConfigFile.Project.Name;
+                        await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, pathCurrent, true));
+                        // Delete temp update directory
+                        DirectoryHandler.DestroyDirectory(pathTemp);
+                    }
+                    else
+                    {
+                        // Move the updated files from the temp to exe directory
+                        this.ProgressText = "Moving Files...";
+                        string nameProject = ConfigHandler.ConfigFile.Project.Name;
+                        await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true));
+                        // Delete temp update directory
+                        this.ProgressText = "Deleting Temp Files...";
+                        DirectoryHandler.DestroyDirectory(pathTemp);
+
+                        this.ProgressText = "";
+
+                        // Update the version to the latest
+                        ConfigHandler.ConfigFile.Version.LocalVersion = await UpdateHandler.GetLatestVersion(projectId);
+                        ConfigHandler.ConfigFile.Version.UpdateDate = DateTime.UtcNow;
+                        ConfigHandler.SaveConfig();
+                        GuiUpdateVersion(projectId);
                     }
 
 
-                    // Move the updated files from the temp to exe directory
-                    string nameProject = ConfigHandler.ConfigFile.Project.Name;
-                    await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true));
-                    // Delete temp update directory
-//                    DirectoryHandler.DestroyDirectory(pathTemp);
-
-
-                    // Update the version to the latest
-                    /*ConfigHandler.ConfigFile.Version.LocalVersion = await UpdateHandler.GetLatestVersion(projectId);
-                    ConfigHandler.ConfigFile.Version.UpdateDate = DateTime.UtcNow;
-                    ConfigHandler.SaveConfig();
-                    GuiUpdateVersion(projectId);*/
                 }
             } catch {
 
