@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Input;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace EclipseUpdater
 {
@@ -68,8 +69,6 @@ namespace EclipseUpdater
             this.Description = ConfigHandler.ConfigFile.Project.Description;
 
             this.UpdateCommand = ReactiveCommand.Create(UpdateCommandCallback);
-
-            //this.UpdateStatus = "Checking for Updates...";
             GuiUpdateVersion(projectId);
         }
 
@@ -77,10 +76,12 @@ namespace EclipseUpdater
         {
             this.LocalVersion = "Local: " + ConfigHandler.ConfigFile.Version.LocalVersion;
 
+            this.ProgressText = "Checking for Updates...";
+
             string versionCurrent = await UpdateHandler.GetLatestVersion(projectId);
             this.LatestVersion = "Latest: " + versionCurrent;
 
-            //this.UpdateStatus = (ConfigHandler.ConfigFile.Version.LocalVersion == versionCurrent) ? "Launch!" : "Update!";
+            this.ProgressText = (ConfigHandler.ConfigFile.Version.LocalVersion == versionCurrent) ? "Up to Date!" : "New Update(s) Available!";
         }
 
         private async void UpdateCommandCallback() {
@@ -93,7 +94,7 @@ namespace EclipseUpdater
 
                 if (urlDownloads.Length != 0) {
                     // Delete temp update directory incase one is still hanging around
-//                    DirectoryHandler.DestroyDirectory(pathTemp);
+                    DirectoryHandler.DestroyDirectory(pathTemp);
 
                     // Create temp directories for updating
                     DirectoryHandler.CreateDirectory(pathTemp);
@@ -103,13 +104,18 @@ namespace EclipseUpdater
 
                     // Download each update
                     for (int i = 0; i < urlDownloads.Length; i++) {
-//                        await Download.DownloadUpdate(Path.Combine(pathTempDownload), i, urlDownloads[i], this);
+                        string progressText = "Downloading file " + (i + 1) + "/" + urlDownloads.Length;
+                        await Download.DownloadUpdate(Path.Combine(pathTempDownload), i, urlDownloads[i], this, progressText);
                     }
 
 
                     // Check for extraction
-                    foreach (string file in Directory.EnumerateFiles(pathTempDownload)) {
-                        await Task.Run(() => ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract, this));
+                    var files = from file in Directory.EnumerateFiles(pathTempDownload) select file;
+                    int curFile = 1;
+                    foreach (string file in files) {
+                        string progressText = "Extracting file " + curFile + "/" + files.Count(); 
+                        await Task.Run(() => ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract, this, progressText));
+                        ++curFile;
                     }
 
 

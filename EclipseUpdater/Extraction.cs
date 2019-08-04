@@ -14,34 +14,41 @@ namespace EclipseUpdater
 {
     class ExtractionHandler
     {
-        public static bool ExtractFile(string pathTarget, string pathExtractTo, MainWindowViewModel gui)
+        private static MainWindowViewModel GUI;
+        private static string ProgressText;
+
+        public static bool ExtractFile(string pathTarget, string pathExtractTo, MainWindowViewModel gui, string progressText = "")
         {
-            gui.Progress = 0;
-            string ext = Path.GetExtension(pathTarget);
-            switch (ext)
+            GUI = gui;
+            GUI.Progress = 0;
+            if (progressText.Length != 0) { ProgressText = progressText + Environment.NewLine + "Extracting file "; }
+
+            switch (Path.GetExtension(pathTarget))
             {
                 case ".zip":
-                    ExtractZip(pathTarget, pathExtractTo, gui); // ICSharpCode
+                    ExtractZip(pathTarget, pathExtractTo); // ICSharpCode
                     break;
                 case ".gz":
-                    ExtractGZip(pathTarget, pathExtractTo, gui); // ICSharpCode
+                    ExtractGZip(pathTarget, pathExtractTo); // ICSharpCode
                     break;
                 case ".tar":
-                    ExtractTar(pathTarget, pathExtractTo, gui); // ICSharpCode
+                    ExtractTar(pathTarget, pathExtractTo); // ICSharpCode
                     break;
                 case ".rar":
-                    ExtractRar(pathTarget, pathExtractTo, gui); // SharpCompress
+                    ExtractRar(pathTarget, pathExtractTo); // SharpCompress
                     break;
             }
 
-            gui.Progress = 100;
+            GUI.Progress = 100;
+            GUI.ProgressText = "";
             return true;
             //ICSharpCode.SharpZipLib
         }
 
-        private static void ExtractZip(string pathTarget, string pathExtractTo, MainWindowViewModel gui, string password = "")
+        private static void ExtractZip(string pathTarget, string pathExtractTo, string password = "")
         {
             /*
+            */
             ZipFile zf = null;
             try
             {
@@ -75,6 +82,9 @@ namespace EclipseUpdater
                     if (directoryName.Length > 0)
                         Directory.CreateDirectory(directoryName);
 
+                    // Update progress text
+                    GUI.ProgressText = ProgressText + entryFileName;
+
                     // Unzip file in buffered chunks. This is just as fast as unpacking to a buffer the full size
                     // of the file, but does not waste memory.
                     // The "using" will close the stream even if an exception occurs.
@@ -84,7 +94,7 @@ namespace EclipseUpdater
                     }
 
                     totalRead += 1;
-                    gui.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
+                    GUI.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
                 }
             }
             finally
@@ -95,76 +105,10 @@ namespace EclipseUpdater
                     zf.Close(); // Ensure we release resources
                 }
             }
-            */
-
-            // Use a 4K buffer. Any larger is a waste.    
-            byte[] dataBuffer = new byte[4096];
-
-            using (Stream fs = new FileStream(pathTarget, FileMode.Open, FileAccess.Read))
-            {
-                long totalSize = fs.Length;
-                long totalRead = 0;
-
-                ZipInputStream zipInputStream = new ZipInputStream(fs);
-                ZipEntry zipEntry = zipInputStream.GetNextEntry();
-                while (zipEntry != null)
-                {
-                    String entryFileName = zipEntry.Name;
-                    // to remove the folder from the entry:- entryFileName = Path.GetFileName(entryFileName);
-                    // Optionally match entrynames against a selection list here to skip as desired.
-                    // The unpacked length is available in the zipEntry.Size property.
-
-                    byte[] buffer = new byte[4096];     // 4K is optimum
-
-                    // Manipulate the output filename here as desired.
-                    String fullZipToPath = Path.Combine(pathExtractTo, entryFileName);
-                    string directoryName = Path.GetDirectoryName(fullZipToPath);
-                    if (directoryName.Length > 0)
-                        Directory.CreateDirectory(directoryName);
-
-                    // Skip directory entry
-                    string fileName = Path.GetFileName(fullZipToPath);
-                    if (fileName.Length == 0)
-                    {
-                        zipEntry = zipInputStream.GetNextEntry();
-                        continue;
-                    }
-
-                    // Unzip file in buffered chunks. This is just as fast as unpacking to a buffer the full size
-                    // of the file, but does not waste memory.
-                    // The "using" will close the stream even if an exception occurs.
-                    using (FileStream streamWriter = File.Create(fullZipToPath))
-                    {
-                        StreamUtils.Copy(zipInputStream, streamWriter, buffer);
-                    }
-
-                    totalRead += zipEntry.CompressedSize;
-                    gui.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
-
-                    zipEntry = zipInputStream.GetNextEntry();
-                }
-
-                /*
-                using (ZipInputStream zipStream = new ZipInputStream(fs))
-                {
-                    // Change this to your needs
-                    string fnOut = Path.Combine(pathExtractTo, Path.GetFileNameWithoutExtension(pathTarget));
-
-                    using (FileStream fsOut = File.Create(fnOut))
-                    {
-                        StreamUtils.Copy(zipStream, fsOut, dataBuffer);
-
-                        int bytesRead = await fsOut.ReadAsync(buffer, 0, buffer.Length);
-                        totalRead += bytesRead;
-                    }
-                    gui.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
-                }
-                */
-            }
         }
 
         // Code from https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples
-        private static void ExtractGZip(string pathTarget, string pathExtractTo, MainWindowViewModel gui)
+        private static void ExtractGZip(string pathTarget, string pathExtractTo)
         {
             // Use a 4K buffer. Any larger is a waste.    
             byte[] dataBuffer = new byte[4096];
@@ -179,31 +123,23 @@ namespace EclipseUpdater
                     if (!Directory.Exists(pathTempExtractTo)) { DirectoryHandler.CreateDirectory(pathTempExtractTo); }
                     using (FileStream fsOut = File.Create(Path.Combine(pathTempExtractTo, Path.GetFileNameWithoutExtension(pathTarget))))
                     {
+                        // Update progress text
+                        GUI.ProgressText = ProgressText + Path.GetFileName(fsOut.Name);
+
                         StreamUtils.Copy(gzipStream, fsOut, dataBuffer);
                     }
                 }
             }
 
             // Extract the file again if needed (it should be needed)
-            ExtractFile(Path.Combine(pathTempExtractTo, Path.GetFileNameWithoutExtension(pathTarget)), pathExtractTo, gui);
+            ExtractFile(Path.Combine(pathTempExtractTo, Path.GetFileNameWithoutExtension(pathTarget)), pathExtractTo, GUI);
             // Delete that file to prevent it from being extracted again
             DirectoryHandler.DestroyDirectory(pathTempExtractTo);
         }
 
         // Code from https://github.com/icsharpcode/SharpZipLib/wiki/GZip-and-Tar-Samples
-        private static void ExtractTar(string pathTarget, string pathExtractTo, MainWindowViewModel gui)
+        private static void ExtractTar(string pathTarget, string pathExtractTo)
         {
-            /*
-            Stream stream = File.OpenRead(pathTarget);
-
-            TarArchive tarArchive = TarArchive.CreateInputTarArchive(stream);
-            tarArchive.ExtractContents(pathExtractTo);
-            tarArchive.Close();
-
-            stream.Close();
-            */
-
-
             // Use a 4K buffer. Any larger is a waste.    
             byte[] dataBuffer = new byte[4096];
 
@@ -237,6 +173,9 @@ namespace EclipseUpdater
                         continue;
                     }
 
+                    // Update progress text
+                    GUI.ProgressText = ProgressText + fileName;
+
                     // Unzip file in buffered chunks. This is just as fast as unpacking to a buffer the full size
                     // of the file, but does not waste memory.
                     // The "using" will close the stream even if an exception occurs.
@@ -246,7 +185,7 @@ namespace EclipseUpdater
                     }
 
                     totalRead += tarEntry.Size;
-                    gui.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
+                    GUI.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
 
                     tarEntry = tarInputStream.GetNextEntry();
                 }
@@ -254,7 +193,7 @@ namespace EclipseUpdater
         }
 
         // Code from https://github.com/adamhathcock/sharpcompress/blob/master/USAGE.md
-        private static void ExtractRar(string pathTarget, string pathExtractTo, MainWindowViewModel gui)
+        private static void ExtractRar(string pathTarget, string pathExtractTo)
         {
             using (var archive = RarArchive.Open(pathTarget))
             {
@@ -264,11 +203,14 @@ namespace EclipseUpdater
 
                 foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
                 {
+                    // Update progress text
+                    GUI.ProgressText = ProgressText + entry.Key;
+
                     entry.WriteToDirectory(pathExtractTo, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
 
                     // Track each individual extraction.
                     totalRead += entry.Size;
-                    gui.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
+                    GUI.Progress = MainWindowViewModel.GetProgress(totalRead, totalSize);
                 }
             }
         }
