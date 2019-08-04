@@ -28,9 +28,9 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Margin="0,10,0,0" TextAlignment="Left" Text="{Binding LocalVersion}" Opacity="0" /><!-- This is probably a bad method -->
             <TextBlock Grid.Column="0" Margin="0,10,0,0" TextAlignment="Left" Text="{Binding LatestVersion}" Opacity="0" /><!-- This is probably a bad method -->
-            <TextBlock Grid.Column="1" Margin="10,0,10,0" TextAlignment="Center" Text="{Binding ProgessText}" TextWrapping="Wrap" />
-            
-            <Grid Grid.Column="2">
+            <TextBlock Grid.Column="1" Margin="10,0,10,0" TextAlignment="Center" Text="{Binding ProgressText}" TextWrapping="Wrap" VerticalAlignment="Center" />
+
+            <Grid Grid.Column="2"  VerticalAlignment="Bottom">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
