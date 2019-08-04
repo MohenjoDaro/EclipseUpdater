@@ -13,10 +13,11 @@ namespace EclipseUpdater
 
 
         // Downloads a file from a given link
-        public async static Task<bool> DownloadUpdate(string pathTarget, string url, MainWindowViewModel gui)
+        public async static Task<bool> DownloadUpdate(string pathTarget, int numFile, string url, MainWindowViewModel gui)
         {
             try
             {
+                gui.Progress = 0;
                 FlurlClient client = new FlurlClient{ BaseUrl = url };
                 var response = await url.GetAsync();
 
@@ -30,9 +31,10 @@ namespace EclipseUpdater
                     bool isComplete = false;
 
                     // Flurl code to get file name
+                    // Add the file number to the name to prevent overwrite
                     var header = response.Content.Headers.ContentDisposition;
-                    string pathFile = (header == null) ? "" : string.Join("_", (header.FileNameStar ?? header.FileName)?.StripQuotes().Split(Path.GetInvalidFileNameChars()));
-                    
+                    string pathFile = string.Concat(numFile, (header == null) ? "" : string.Join("_", (header.FileNameStar ?? header.FileName)?.StripQuotes().Split(Path.GetInvalidFileNameChars())));
+
                     using (FileStream fileStream = new FileStream(Path.Combine(pathTarget, pathFile), FileMode.Create, FileAccess.Write, FileShare.None, 1024, true))
                     {
                         do
@@ -49,29 +51,19 @@ namespace EclipseUpdater
 
                             totalBytesRead += bytesRead;
 
-                            gui.Progress = GetProgress(totalBytesRead, totalBytes);
+                            gui.Progress = MainWindowViewModel.GetProgress(totalBytesRead, totalBytes);
                         }
                         while (!isComplete);
                     }
                 }
 
+                gui.Progress = 100;
                 return true;
             }
             catch (InvalidCastException e)
             {
                 Console.WriteLine("Error: " + e);
                 return false;
-            }
-        }
-
-        private static int GetProgress(long totalBytesRead, long? totalBytes)
-        {
-            try
-            {
-                int percent = Convert.ToInt32((totalBytesRead * 100) / ((totalBytes == null) ? 0 : totalBytes));
-                return percent;
-            } catch {
-                return 0;
             }
         }
     }

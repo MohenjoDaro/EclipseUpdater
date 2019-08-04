@@ -45,6 +45,21 @@ namespace EclipseUpdater
             get => progress;
             set => this.RaiseAndSetIfChanged(ref progress, value);
         }
+        public static int GetProgress(long totalBytesRead, long? totalBytes)
+        {
+            try {
+                int percent = Convert.ToInt32((totalBytesRead * 100) / ((totalBytes == null) ? 0 : totalBytes));
+                if (percent > 100) { percent = 100; }
+                return percent;
+            } catch { return 0; }
+        }
+
+        string progressText;
+        public string ProgressText
+        {
+            get => progressText;
+            set => this.RaiseAndSetIfChanged(ref progressText, value);
+        }
 
         public MainWindowViewModel(Guid projectId)
         {
@@ -54,6 +69,7 @@ namespace EclipseUpdater
 
             this.UpdateCommand = ReactiveCommand.Create(UpdateCommandCallback);
 
+            //this.UpdateStatus = "Checking for Updates...";
             GuiUpdateVersion(projectId);
         }
 
@@ -63,6 +79,8 @@ namespace EclipseUpdater
 
             string versionCurrent = await UpdateHandler.GetLatestVersion(projectId);
             this.LatestVersion = "Latest: " + versionCurrent;
+
+            //this.UpdateStatus = (ConfigHandler.ConfigFile.Version.LocalVersion == versionCurrent) ? "Launch!" : "Update!";
         }
 
         private async void UpdateCommandCallback() {
@@ -75,7 +93,7 @@ namespace EclipseUpdater
 
                 if (urlDownloads.Length != 0) {
                     // Delete temp update directory incase one is still hanging around
-                    DirectoryHandler.DestroyDirectory(pathTemp);
+//                    DirectoryHandler.DestroyDirectory(pathTemp);
 
                     // Create temp directories for updating
                     DirectoryHandler.CreateDirectory(pathTemp);
@@ -85,13 +103,13 @@ namespace EclipseUpdater
 
                     // Download each update
                     for (int i = 0; i < urlDownloads.Length; i++) {
-                        await Download.DownloadUpdate(pathTempDownload, urlDownloads[i], this);
+//                        await Download.DownloadUpdate(Path.Combine(pathTempDownload), i, urlDownloads[i], this);
                     }
 
 
                     // Check for extraction
                     foreach (string file in Directory.EnumerateFiles(pathTempDownload)) {
-                        ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract);
+                        await Task.Run(() => ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract, this));
                     }
 
 
@@ -119,16 +137,16 @@ namespace EclipseUpdater
 
                     // Move the updated files from the temp to exe directory
                     string nameProject = ConfigHandler.ConfigFile.Project.Name;
-                    DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true);
+                    await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true));
                     // Delete temp update directory
-                    DirectoryHandler.DestroyDirectory(pathTemp);
+//                    DirectoryHandler.DestroyDirectory(pathTemp);
 
 
                     // Update the version to the latest
-                    ConfigHandler.ConfigFile.Version.LocalVersion = await UpdateHandler.GetLatestVersion(projectId);
+                    /*ConfigHandler.ConfigFile.Version.LocalVersion = await UpdateHandler.GetLatestVersion(projectId);
                     ConfigHandler.ConfigFile.Version.UpdateDate = DateTime.UtcNow;
                     ConfigHandler.SaveConfig();
-                    GuiUpdateVersion(projectId);
+                    GuiUpdateVersion(projectId);*/
                 }
             } catch {
 
