@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Diagnostics;
 
 namespace EclipseUpdater
 {
@@ -108,7 +109,7 @@ namespace EclipseUpdater
                         string pathSelf = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
                         await UpdateProgram(idUpdater, Constants.UpdaterDate);
                         FileHandler.RunFile(pathSelf);
-                        System.Diagnostics.Process.GetCurrentProcess().Kill();
+                        Process.GetCurrentProcess().Kill();
                         break;
                     default:
                         break;
@@ -184,7 +185,7 @@ namespace EclipseUpdater
                         // Get the list of file names from the temp download directory
                         foreach (string file in Directory.EnumerateFiles(pathTempExtract))
                         {
-                            string pathCurrentFile = Path.Combine(pathCurrent, file);
+                            string pathCurrentFile = Path.Combine(pathCurrent, Path.GetFileName(file));
                             if (File.Exists(pathCurrentFile))
                             {
                                 FileHandler.MarkForDeletionFile(pathCurrentFile);
@@ -192,7 +193,6 @@ namespace EclipseUpdater
                         }
 
                         // Move the updated files from the temp to exe directory
-                        string nameProject = ConfigHandler.ConfigFile.Project.Name;
                         await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, pathCurrent, true));
                         // Delete temp update directory
                         DirectoryHandler.DestroyDirectory(pathTemp);
