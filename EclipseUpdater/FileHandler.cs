@@ -172,6 +172,11 @@ namespace EclipseUpdater
                 return false;
             }
         }
+
+        public string ReplaceInvalidChars(string nameFile)
+        {
+            return string.Join("_", nameFile.Split(Path.GetInvalidFileNameChars()));
+        }
     }
 
 

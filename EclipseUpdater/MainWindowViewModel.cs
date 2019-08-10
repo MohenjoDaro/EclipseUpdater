@@ -201,7 +201,7 @@ namespace EclipseUpdater
                     {
                         // Move the updated files from the temp to exe directory
                         this.ProgressText = "Moving Files...";
-                        string nameProject = ConfigHandler.ConfigFile.Project.Name;
+                        string nameProject = FileHandler.ReplaceInvalidChars(ConfigHandler.ConfigFile.Project.Name);
                         await Task.Run(() => DirectoryHandler.MoveDirectory(pathTempExtract, Path.Combine(pathCurrent, nameProject), true));
                         // Delete temp update directory
                         this.ProgressText = "Deleting Temp Files...";
@@ -231,7 +231,7 @@ namespace EclipseUpdater
             for (int i = 0; i < paths.Length; ++i)
             {
                 // Split the path in the file up to prevent path issues
-                FileHandler.RunFile(Path.Combine(pathCurrent, Path.Combine(paths[i].Split("/"))));
+                FileHandler.RunFile(Path.Combine(pathCurrent, FileHandler.ReplaceInvalidChars(ConfigHandler.ConfigFile.Project.Name), Path.Combine(paths[i].Split("/"))));
             }
         }
     }
