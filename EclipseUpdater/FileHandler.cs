@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using EclipseUpdater.Api;
 using Newtonsoft.Json;
@@ -164,16 +165,21 @@ namespace EclipseUpdater
         {
             try
             {
-                System.Diagnostics.Process.Start(pathTarget);
+                using (Process proc = new Process())
+                {
+                    proc.StartInfo.FileName = pathTarget;
+                    proc.Start();
+                }
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
         }
 
-        public string ReplaceInvalidChars(string nameFile)
+        public static string ReplaceInvalidChars(string nameFile)
         {
             return string.Join("_", nameFile.Split(Path.GetInvalidFileNameChars()));
         }

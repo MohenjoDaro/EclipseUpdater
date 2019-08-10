@@ -28,6 +28,12 @@ namespace EclipseUpdater
             set => this.RaiseAndSetIfChanged(ref description, value);
         }
 
+        string updateText;
+        public string UpdateText {
+            get => updateText;
+            set => this.RaiseAndSetIfChanged(ref updateText, value);
+        }
+
         string versionLocal;
         public string LocalVersion
         {
@@ -89,8 +95,14 @@ namespace EclipseUpdater
 
             isUpdated = (versionCurrent == ConfigHandler.ConfigFile.Version.LocalVersion);
 
-            this.ProgressText = (isUpdated) ? "Up to Date!" : "New Update(s) Available!";
-            
+            if (isUpdated)
+            {
+                this.ProgressText = "Up to Date!";
+                this.UpdateText = "Launch!";
+            } else {
+                this.ProgressText = "New Update(s) Available!";
+                this.UpdateText = "Update!";
+            }
         }
 
         private async void CheckForSelfUpdates()
