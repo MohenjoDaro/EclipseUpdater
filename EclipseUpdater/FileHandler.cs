@@ -159,6 +159,19 @@ namespace EclipseUpdater
                 return false;
             }
         }
+
+        public static bool RunFile(string pathTarget)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(pathTarget);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
 
@@ -170,6 +183,12 @@ namespace EclipseUpdater
             public Guid ID { get; set; }
             public string Name { get; set; }
             public string Description { get; set; }
+
+            public class LaunchData
+            {
+                public string[] Path { get; set; }
+            }
+            public LaunchData Launch = new LaunchData(); // { get; set; }
         }
 
         public class VersionData
@@ -188,30 +207,45 @@ namespace EclipseUpdater
         private static readonly string cfgPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.json");
         public static Config ConfigFile { get; set; }
 
+        private static void CreateConfig()
+        {
+            try
+            {
+                ConfigFile = new Config
+                {
+                    Project = new Config.ProjectData
+                    {
+                        ID = Guid.Empty,
+                        Name = "",
+                        Description = "",
+                        Launch = new Config.ProjectData.LaunchData()
+                        {
+                            Path = new string[] { "" }
+                        }
+                    },
+                    Version = new Config.VersionData
+                    {
+                        LocalVersion = "",
+                        ID = -1,
+                        UpdateDate = new DateTime()
+                    }
+                };
+            } catch {
+
+            }
+        }
+
         public static void LoadConfig()
         {
-            try {
+            try
+            {
                 if (File.Exists(cfgPath))
                 {
                     ConfigFile = JsonConvert.DeserializeObject<Config>(File.ReadAllText(cfgPath));
                 }
                 else
                 {
-                    ConfigFile = new Config
-                    {
-                        Project = new Config.ProjectData
-                        {
-                            ID = Guid.Empty,
-                            Name = "",
-                            Description = ""
-                        },
-                        Version = new Config.VersionData
-                        {
-                            LocalVersion = "",
-                            ID = -1,
-                            UpdateDate = new DateTime()
-                        }
-                    };
+                    CreateConfig();
 
                     SaveConfig();
                 }
@@ -240,6 +274,17 @@ namespace EclipseUpdater
     {
         private const int countPage = 25;
 
+        public static async Task<bool> CheckForUpdates(Guid projectId, string version)
+        {
+            try
+            {
+                string versionCurrent = await UpdateHandler.GetLatestVersion(projectId);
+                return (versionCurrent == version) ? false : true;
+            } catch {
+                return false;
+            }
+        }
+
         public static async Task<string> GetLatestVersion(Guid projectId)
         {
             try
@@ -247,20 +292,18 @@ namespace EclipseUpdater
                 var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
 
                 var releaseLocal = await releasesClient.GetReleasesAsync(projectId, 0, 1);
-                return releaseLocal.Items[0].Version;
+                return (releaseLocal.Items.Count == 0) ? "" : releaseLocal.Items[0].Version;
             } catch {
                 return "";
             }
         }
 
         // Returns a string array of urls to download files
-        public static async Task<string[]> GetUpdateUrls(Guid projectId)
+        public static async Task<string[]> GetUpdateUrls(Guid projectId, DateTime dateUpdate)
         {
             try
             {
                 var releasesClient = new ReleasesClient("https://releases.eclipseorigins.com");
-
-                DateTime dateUpdate = ConfigHandler.ConfigFile.Version.UpdateDate;
 
                 var releaseNewest = await releasesClient.GetReleasesAsync(projectId, 0, 1, minimumDate: dateUpdate);
                 int cntReleases = releaseNewest.TotalCount;

@@ -62,6 +62,9 @@ namespace EclipseUpdater
             set => this.RaiseAndSetIfChanged(ref progressText, value);
         }
 
+        private bool isUpdated = false;
+
+
         public MainWindowViewModel(Guid projectId)
         {
             this.projectId = projectId; // new Guid("0836bbd7-d9b4-466a-a566-7670bd568e3b");
@@ -70,6 +73,8 @@ namespace EclipseUpdater
 
             this.UpdateCommand = ReactiveCommand.Create(UpdateCommandCallback);
             GuiUpdateVersion(projectId);
+
+            CheckForSelfUpdates();
         }
 
         private async void GuiUpdateVersion(Guid projectId)
@@ -81,18 +86,57 @@ namespace EclipseUpdater
             string versionCurrent = await UpdateHandler.GetLatestVersion(projectId);
             this.LatestVersion = "Latest: " + versionCurrent;
 
-            this.ProgressText = (ConfigHandler.ConfigFile.Version.LocalVersion == versionCurrent) ? "Up to Date!" : "New Update(s) Available!";
+            isUpdated = (versionCurrent == ConfigHandler.ConfigFile.Version.LocalVersion);
+
+            this.ProgressText = (isUpdated) ? "Up to Date!" : "New Update(s) Available!";
+            
         }
 
-        private async void UpdateCommandCallback() {
-            try {
+        private async void CheckForSelfUpdates()
+        {
+            Guid idUpdater = Constants.UpdaterId;
+            if (await UpdateHandler.CheckForUpdates(idUpdater, Constants.UpdaterVersion))
+            {
+                var response = await MessageBox.Show(
+                    "New Version!",
+                    "There is a new version of the updater avaiable." + Environment.NewLine + "Would you like to download it now?",
+                    new string[] { "Update!", "Dismiss" });
+
+                switch (response)
+                {
+                    case 0:
+                        string pathSelf = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().GetName().CodeBase);
+                        await UpdateProgram(idUpdater, Constants.UpdaterDate);
+                        FileHandler.RunFile(pathSelf);
+                        System.Diagnostics.Process.GetCurrentProcess().Kill();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private async Task UpdateCommandCallback() {
+            if (isUpdated)
+            {
+                LaunchPrograms();
+            } else {
+                await UpdateProgram(projectId, ConfigHandler.ConfigFile.Version.UpdateDate);
+            }
+        }
+
+        private async Task UpdateProgram(Guid projectId, DateTime dateUpdate)
+        {
+            try
+            {
                 // Check for updates
-                string[] urlDownloads = await UpdateHandler.GetUpdateUrls(projectId);
+                string[] urlDownloads = await UpdateHandler.GetUpdateUrls(projectId, dateUpdate);
                 string pathTemp = Path.Combine(Path.GetTempPath(), "updater_temp");
                 string pathTempDownload = Path.Combine(pathTemp, "download");
                 string pathTempExtract = Path.Combine(pathTemp, "extract");
 
-                if (urlDownloads.Length != 0) {
+                if (urlDownloads.Length != 0)
+                {
                     // Delete temp update directory incase one is still hanging around
                     DirectoryHandler.DestroyDirectory(pathTemp);
 
@@ -103,7 +147,8 @@ namespace EclipseUpdater
 
 
                     // Download each update
-                    for (int i = 0; i < urlDownloads.Length; i++) {
+                    for (int i = 0; i < urlDownloads.Length; i++)
+                    {
                         string progressText = "Downloading file " + (i + 1) + "/" + urlDownloads.Length;
                         await Download.DownloadUpdate(Path.Combine(pathTempDownload), i, urlDownloads[i], this, progressText);
                     }
@@ -112,8 +157,9 @@ namespace EclipseUpdater
                     // Check for extraction
                     var files = from file in Directory.EnumerateFiles(pathTempDownload) select file;
                     int curFile = 1;
-                    foreach (string file in files) {
-                        string progressText = "Extracting file " + curFile + "/" + files.Count(); 
+                    foreach (string file in files)
+                    {
+                        string progressText = "Extracting file " + curFile + "/" + files.Count();
                         await Task.Run(() => ExtractionHandler.ExtractFile(Path.Combine(pathTempDownload, file), pathTempExtract, this, progressText));
                         ++curFile;
                     }
@@ -126,17 +172,21 @@ namespace EclipseUpdater
                     if (projectId == Constants.UpdaterId) // This will be the UPDATERS's ID
                     {
                         // Get the list of directory names from the temp download directory
-                        foreach (string dir in Directory.EnumerateDirectories(pathTempExtract)) {
+                        foreach (string dir in Directory.EnumerateDirectories(pathTempExtract))
+                        {
                             string pathCurrentDirectory = Path.Combine(pathCurrent, dir);
-                            if (File.Exists(pathCurrentDirectory)) {
+                            if (File.Exists(pathCurrentDirectory))
+                            {
                                 FileHandler.MarkForDeletionFile(pathCurrentDirectory);
                             }
                         }
 
                         // Get the list of file names from the temp download directory
-                        foreach (string file in Directory.EnumerateFiles(pathTempExtract)) {
+                        foreach (string file in Directory.EnumerateFiles(pathTempExtract))
+                        {
                             string pathCurrentFile = Path.Combine(pathCurrent, file);
-                            if (File.Exists(pathCurrentFile)) {
+                            if (File.Exists(pathCurrentFile))
+                            {
                                 FileHandler.MarkForDeletionFile(pathCurrentFile);
                             }
                         }
@@ -166,10 +216,22 @@ namespace EclipseUpdater
                         GuiUpdateVersion(projectId);
                     }
 
-
                 }
-            } catch {
+            }
+            catch
+            {
 
+            }
+        }
+
+        private void LaunchPrograms()
+        {
+            string pathCurrent = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            string[] paths = ConfigHandler.ConfigFile.Project.Launch.Path;
+            for (int i = 0; i < paths.Length; ++i)
+            {
+                // Split the path in the file up to prevent path issues
+                FileHandler.RunFile(Path.Combine(pathCurrent, Path.Combine(paths[i].Split("/"))));
             }
         }
     }
